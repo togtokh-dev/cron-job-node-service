@@ -9,11 +9,14 @@ import {
   getone,
   list_create,
 } from "./controller";
-router.post(
-  "/list",
-  authMaster.checkTokenBearer(["reportToken"], { required: true }),
-  list_create
-);
+
+router.post("/list", list_create);
+
+// router.post(
+//   "/list",
+//   authMaster.checkTokenBearer(["reportToken"], { required: true }),
+//   list_create
+// );
 router.post("/", create);
 router.put("/:id", update);
 router.delete("/:id", remove);
