@@ -1,0 +1,30 @@
+stages:
+  - build
+  - deploy
+
+variables:
+  SSH_USER: buyantogtokh
+  SSH_HOST_1: 10.21.67.159
+
+# ------------------------------------------------ PRODUCTION -------------------------------------------
+
+build:
+  stage: build
+  needs: []
+  image: node:latest
+  script:
+    - npm install
+    - npm run build
+
+deploy:
+  stage: deploy
+  needs: [build]
+  image: ubuntu:20.04
+  variables:
+    ENV: production
+    CI_PROJECT_NAME: $CI_PROJECT_NAME
+    GLTOKEN: $GLTOKEN
+  before_script:
+
+  script:
+    - ssh -o StrictHostKeyChecking=no -p 20020 $SSH_USER@$SSH_HOST_1 "cd /home/buyantogtokh/git/mp-cron-job-service && sh .sh.deploy"
