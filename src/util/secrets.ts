@@ -5,8 +5,10 @@ import path from "path";
 
 export const ENV_TYPE = process.env.NODE_ENV || process.env.npm_lifecycle_event;
 if (ENV_TYPE == "production") {
-  console.log(path.resolve(__dirname, "../../.env.production"));
-  if (fs.existsSync(path.resolve(__dirname, "../../.env.production"))) {
+  if (fs.existsSync(path.resolve(__dirname, "../../.env"))) {
+    logger.debug("Using .env file to supply config environment variables");
+    dotenv.config({ path: path.resolve(__dirname, "../../.env") });
+  } else if (fs.existsSync(path.resolve(__dirname, "../../.env.production"))) {
     logger.debug(
       "Using .env.production file to supply config environment variables"
     );
