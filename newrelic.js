@@ -9,7 +9,7 @@ exports.config = {
   /**
    * Array of application names.
    */
-  app_name: [String(process.env.MS_NAME)],
+  app_name: [String(process.env.NAME)],
   /**
    * Your New Relic license key.
    */

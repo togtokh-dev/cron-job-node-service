@@ -1,43 +1,45 @@
-lib-cov
-*.seed
+# Logs
 *.log
-*.csv
-*.dat
-*.out
-*.pid
-*.gz
-*.swp
-*.log
-
+/logs/
 pids
-logs
-results
+*.pid
 tmp
+newrelic_agent.log
 
-# Build
-
-
-# Coverage reports
+# Coverage
 coverage
 
-# API keys and secrets
+# Env / secrets
+# .env.development/.staging/.production нь ХООСОН template-ээр tracked.
+# Өөрийн нууц утгуудаа эдгээрт бич — ГЭХДЭЭ commit бүү хий (эсвэл .env ашигла).
 .env
+.env.local
 
-# Dependency directory
+# SSL certs / private keys — git-д ОРУУЛАХГҮЙ
+ssl/
+*.key
+*.pem
+
+# Local credentials
+CREDENTIALS.local.md
+
+# Dependencies
 node_modules
-bower_components
 
-# Editors
+# Build output
+dist/
+
+# Admin panel source deps (built output lives in public/)
+web/node_modules
+web/dist
+
+# Editors / OS
 .idea
 *.iml
-
-# OS metadata
+.vscode/*
+!.vscode/settings.json
 .DS_Store
 Thumbs.db
 
-# Ignore built ts files
-dist/**/*
-
-# ignore yarn.lock
+# yarn
 yarn.lock
-package-lock.json

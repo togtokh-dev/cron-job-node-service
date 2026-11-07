@@ -1,54 +1,65 @@
-import errorHandler from "errorhandler";
-import app from "./app";
-import https from "https";
+// src/server.ts
 import fs from "fs";
 import http from "http";
-import IP from "ip";
+import https from "https";
 import path from "path";
-import { ENV_TYPE } from "./util/secrets";
-// import pool from "./config/sql";
-/**
- * Error Handler. Provides full stack
- */
 
-if (ENV_TYPE === "development") {
-  app.use(errorHandler());
-}
+import IP from "ip";
 
-let server;
-if (process.env.SSL === "true") {
+import app from "./app";
+import { CONFIG, validateConfig } from "./config/env";
+import logger from "./util/logger";
+
+validateConfig();
+
+const isSSL = CONFIG.SERVER !== "dev" && process.env.SSL === "true";
+
+let server: http.Server | https.Server;
+
+if (isSSL) {
+  const keyPath = path.resolve(__dirname, "../ssl/ssl.key");
+  const certPath = path.resolve(__dirname, "../ssl/ssl.pem");
+  if (!fs.existsSync(keyPath) || !fs.existsSync(certPath)) {
+    throw new Error("SSL enabled but certificate files not found");
+  }
   server = https.createServer(
-    {
-      key: fs.readFileSync(path.resolve(__dirname, "../ssl/ssl.key")),
-      cert: fs.readFileSync(path.resolve(__dirname, "../ssl/ssl.pem")),
-    },
+    { key: fs.readFileSync(keyPath), cert: fs.readFileSync(certPath) },
     app
   );
 } else {
   server = http.createServer(app);
 }
 
-/**
- * Start Express server
- */
-server.listen(app.get("port"), async () => {
-  const ipAddress = IP.address();
-  if (process.env.SSL === "true") {
-    console.log(
-      "App id running at https://%s:%d in %s mode",
-      ipAddress,
-      app.get("port"),
-      ENV_TYPE
-    );
-  } else {
-    console.log(
-      "App id running at http://%s:%d in %s mode",
-      ipAddress,
-      app.get("port"),
-      ENV_TYPE
-    );
-  }
-
-  console.log("Press CTRL-C to stop\n");
+server.listen(CONFIG.PORT, () => {
+  const ip = IP.address();
+  const protocol = isSSL ? "https" : "http";
+  logger.info("server listening", {
+    url: `${protocol}://${ip}:${CONFIG.PORT}`,
+    port: CONFIG.PORT,
+    env: CONFIG.ENV_TYPE
+  });
 });
+
+const shutdown = (signal: string) => {
+  logger.info("shutdown signal received", { signal });
+  server.close(() => {
+    logger.info("http server closed");
+    process.exit(0);
+  });
+  setTimeout(() => {
+    logger.fatal("force shutdown after timeout");
+    process.exit(1);
+  }, 10_000);
+};
+
+process.on("SIGINT", () => shutdown("SIGINT"));
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+
+process.on("uncaughtException", (err) => {
+  logger.fatal("uncaught exception", err);
+});
+process.on("unhandledRejection", (reason) => {
+  logger.error("unhandled rejection", reason);
+});
+
 export default server;

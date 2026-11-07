@@ -1,47 +1,39 @@
+// src/config/nosql.ts
 import mongoose from "mongoose";
-import bluebird from "bluebird";
+
+import logger from "../util/logger";
+
+const log = logger.child("mongo");
+
 export type connectType = {
   mongoUrl: string;
   mongoDB: string;
 };
+
 const connectDB = async ({ mongoUrl, mongoDB }: connectType) => {
   mongoose.set("strictQuery", true);
-  mongoose.Promise = bluebird;
   try {
-    const conn = await mongoose.connect(mongoUrl, {
-      dbName: mongoDB,
-    });
-    console.log(
-      `Data base connected : ${conn.connection.host}@${conn.connection.name}`
-    );
+    const conn = await mongoose.connect(mongoUrl, { dbName: mongoDB });
+    log.info("connected", { host: conn.connection.host, db: conn.connection.name });
   } catch (error) {
-    console.log(
-      `MongoDB connection error. Please make sure MongoDB is running. ${error}`
-    );
+    log.fatal("connection failed — is MongoDB running?", error);
     process.exit(1);
   }
+
   mongoose.connection.on("disconnected", () => {
-    console.log("Test script connected to database");
-    connectReload({
-      mongoUrl,
-      mongoDB,
-    });
+    log.warn("disconnected — reconnecting");
+    void connectReload({ mongoUrl, mongoDB });
   });
 };
+
 export const connectReload = async ({ mongoUrl, mongoDB }: connectType) => {
   mongoose.set("strictQuery", true);
-  mongoose.Promise = bluebird;
   try {
-    const conn = await mongoose.connect(mongoUrl, {
-      dbName: mongoDB,
-    });
-    console.log(
-      `Data base connected : ${conn.connection.host}@${conn.connection.name}`
-    );
+    const conn = await mongoose.connect(mongoUrl, { dbName: mongoDB });
+    log.info("reconnected", { host: conn.connection.host, db: conn.connection.name });
   } catch (error) {
-    console.log(
-      `MongoDB connection error. Please make sure MongoDB is running. ${error}`
-    );
+    log.error("reconnect failed", error);
   }
 };
+
 export default connectDB;

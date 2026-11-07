@@ -1,26 +1,15 @@
+// src/api/router.ts
 import { Router } from "express";
+
+import adminRouter from "./admin/router";
+import publicRouter from "./public/router";
+
 const router = Router();
-import authMaster from "auth-master";
-import {
-  create,
-  update,
-  remove,
-  getall,
-  getone,
-  list_create,
-} from "./controller";
 
-router.post("/list", list_create);
+// Admin panel API (эхэнд — /:id-д баригдахаас сэргийлнэ)
+router.use("/admin", adminRouter);
 
-// router.post(
-//   "/list",
-//   authMaster.checkTokenBearer(["reportToken"], { required: true }),
-//   list_create
-// );
-router.post("/", create);
-router.put("/:id", update);
-router.delete("/:id", remove);
-router.get("/", getall);
-router.get("/:id", getone);
+// Backward-compatible нийтийн API (хуучин SDK)
+router.use("/", publicRouter);
 
 export default router;

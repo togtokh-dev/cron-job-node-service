@@ -1,35 +1,42 @@
-import mongoose from "mongoose";
-import { Types } from "mongoose";
-export type DocType = {
-  _id?: Types.ObjectId;
-  id?: string;
-  type_name?: "prod" | "staging" | "dev";
-  job_time?: string;
-  config?: JSON;
-  status?: boolean;
+// src/models/job-list.ts
+import mongoose, { Document, HydratedDocument, Model, Schema, Types } from "mongoose";
+
+export const JOB_ENVS = ["prod", "staging", "test", "dev"] as const;
+export type JobEnvT = (typeof JOB_ENVS)[number];
+
+export interface JobDoc extends Document {
+  _id: Types.ObjectId;
+  /** Хэрэглэгчийн өгсөн давтагдашгүй id (SDK-аас ирдэг) */
+  id: string;
+  type_name: JobEnvT;
+  job_time: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  config: any;
+  status: boolean;
+  /** Энэ ажлын гүйцэтгэлийн log бичих эсэх */
+  log_enabled: boolean;
   createdAt?: Date;
   updatedAt?: Date;
-};
-export interface SchemaDoc extends mongoose.Document {
-  id: string;
-  type_name: "prod" | "staging" | "dev";
-  job_time: string;
-  config: JSON;
-  status: boolean;
 }
-const schema = new mongoose.Schema<SchemaDoc>(
+
+export type JobDocument = HydratedDocument<JobDoc>;
+
+const JobSchema = new Schema<JobDoc>(
   {
-    id: { type: String, required: true, unique: true },
-    type_name: {
-      type: String,
-      enum: ["prod", "staging", "dev"],
-      required: true,
-    },
-    job_time: String,
-    config: JSON,
-    status: { type: Boolean, default: true },
+    id: { type: String, required: true, unique: true, index: true },
+    type_name: { type: String, enum: JOB_ENVS, required: true, index: true },
+    job_time: { type: String, required: true },
+    config: { type: Schema.Types.Mixed, required: true },
+    status: { type: Boolean, default: true, index: true },
+    log_enabled: { type: Boolean, default: false }
   },
   { timestamps: true }
 );
-const model = mongoose.model<SchemaDoc>("job-list", schema)<DocType>;
-export default model;
+
+const modelName = "job-list";
+
+export const JobModel: Model<JobDoc> =
+  (mongoose.models[modelName] as Model<JobDoc> | undefined) ||
+  mongoose.model<JobDoc>(modelName, JobSchema);
+
+export default JobModel;

@@ -1,3 +1,0 @@
-docker build -t cron-job-service-node:v1 --build-arg MODE=staging .
-
-docker run -d -p 2003:2003 --name cron-job-service-node cron-job-service-node:v1
